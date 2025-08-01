@@ -2,21 +2,24 @@ from flask import Flask, request, jsonify
 from pytrends.request import TrendReq
 
 app = Flask(__name__)
-pytrends = TrendReq()
 
-@app.route("/", methods=["POST"])
-def google_trends():
-    data = request.get_json()
-    keyword = data.get("keyword")
+# ✅ New root route for UX
+@app.route('/')
+def home():
+    return "✅ PyTrends API is live. Use /trends?keyword=your_keyword"
 
+@app.route('/trends', methods=['GET'])
+def get_trends():
+    keyword = request.args.get('keyword')
     if not keyword:
         return jsonify({"error": "Keyword is required"}), 400
 
-    pytrends.build_payload([keyword], timeframe='today 12-m')
-    interest = pytrends.interest_over_time()
+    pytrends = TrendReq(hl='en-US', tz=360)
+    pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
 
-    if interest.empty:
-        return jsonify({"error": "No trend data found"}), 404
+    data = pytrends.interest_over_time()
+    if data.empty:
+        return jsonify({"error": "No trend data found for keyword"}), 404
 
-    trend_score = int(interest[keyword].iloc[-1])
-    return jsonify({"keyword": keyword, "trend_score": trend_score})
+    response = data[keyword].dropna().to_dict()
+    return jsonify({"keyword": keyword, "interest": response})
