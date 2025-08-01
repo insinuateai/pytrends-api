@@ -3,8 +3,7 @@ from pytrends.request import TrendReq
 
 app = Flask(__name__)
 
-# ✅ New root route for UX
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
     return "✅ PyTrends API is live. Use /trends?keyword=your_keyword"
 
