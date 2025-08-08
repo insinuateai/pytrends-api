@@ -26,7 +26,7 @@ def get_trends():
 
     try:
         # Initialize PyTrends with retries and backoff to handle rate limits
-        pytrends = TrendReq(hl='en-US', tz=360, retries=5, backoff_factor=0.1)
+        pytrends = TrendReq(hl='en-US', tz=36
         pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
 
         data = pytrends.interest_over_time()
