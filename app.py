@@ -25,12 +25,21 @@ def get_trends():
         return jsonify({"keyword": keyword, "interest": cached["data"]})
 
     try:
-        # Initialize PyTrends with retries and backoff to handle rate limits
-        pytrends = TrendReq(hl='en-US', tz=36
+        pytrends = TrendReq(hl='en-US', tz=360)
         pytrends.build_payload([keyword], cat=0, timeframe='today 12-m', geo='', gprop='')
 
-        data = pytrends.interest_over_time()
-        if data.empty:
+        # Manual retry with exponential backoff
+        data = None
+        for attempt in range(5):
+            try:
+                data = pytrends.interest_over_time()
+                if not data.empty:
+                    break
+            except Exception:
+                pass
+            # wait before next attempt
+            time.sleep(0.2 * (2 ** attempt))
+        if data is None or data.empty:
             return jsonify({"error": f"No trend data found for '{keyword}'"}), 404
 
         # Drop NaN and convert pandas timestamps to strings with integer values
